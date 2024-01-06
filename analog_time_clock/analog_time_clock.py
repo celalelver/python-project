@@ -1,51 +1,26 @@
-import tkinter as tk
-from math import sin, cos, pi
+import os, sys
+from pydub import AudioSegment
 
+if len(sys.argv) != 3:
+    print(f"{sys.argv[0]} <audio file> <format>")
+    sys.exit(1)
 
-def update_clock():
-    current_time = time_var.get()
-    seconds = current_time % 60
-    minutes = (current_time // 60) % 60
-    hours = (current_time // 3600) % 12
+filename = sys.argv[1]
+frm = sys.argv[2]
 
-    seconds_angle = 90 - seconds * 6
-    minutes_angle = 90 - minutes * 6 - seconds * 0.1
-    hours_angle = 90 - (hours * 30 + minutes * 0.5)
+# get absolute file paths
+filepath = os.path.abspath(filename)
+filebase = os.path.basename(filename)
+fileext = filename.split(".")[-1]
 
-    canvas.delete("all")
+print(f"Converting from {fileext} to {frm}")
 
-    canvas.create_oval(50, 50, 250, 250)
+# only run if converting to a different format
+if not (filename.endswith(str("." + frm))):
+    track = AudioSegment.from_file(filename, fileext)
+    newname = filebase.replace(fileext, frm)
 
-    for i in range(1, 13):
-        angle = 90 - i * 30
-        x = 150 + 85 * cos(angle * (pi / 180))
-        y = 150 - 85 * sin(angle * (pi / 180))
-        canvas.create_text(x, y, text=str(i), font=("Arial", 12, "bold"))
-
-    draw_hand(150, 150, seconds_angle, 80, 1)
-    draw_hand(150, 150, minutes_angle, 70, 2)
-    draw_hand(150, 150, hours_angle, 50, 4)
-
-    time_var.set(current_time + 1)
-
-    root.after(1000, update_clock)
-
-
-def draw_hand(x, y, angle, length, width):
-    radian_angle = angle * (pi / 180)
-    end_x = x + length * cos(radian_angle)
-    end_y = y - length * sin(radian_angle)
-    canvas.create_line(x, y, end_x, end_y, width=width)
-
-
-root = tk.Tk()
-root.title("Analog Clock")
-
-canvas = tk.Canvas(root, width=350, height=350)
-canvas.pack()
-
-time_var = tk.IntVar()
-time_var.set(10 * 3600)
-
-update_clock()
-root.mainloop()
+    # save to the same folder as original file
+    newpath = filepath.replace(filebase, newname)
+    track.export(newpath, format=frm)
+    print(f"File saved to {newpath}")
